@@ -139,10 +139,15 @@ def admin_detail(request, pk):
         {
             "complaint": complaint,
             "logs": complaint.status_logs.select_related("actor"),
-            "recategorise_form": RecategoriseForm(initial={"category": complaint.category}),
-            "resolve_form": ResolveForm(),
-            "escalate_form": EscalateForm(),
-            "review_form": ReviewForm(),
+            # Each form is prefixed: all four share a `note` field, and without a
+            # prefix they would render four elements with the same id, so every
+            # <label for="id_note"> would point at the first textarea on the page.
+            "recategorise_form": RecategoriseForm(
+                prefix="categorise", initial={"category": complaint.category}
+            ),
+            "review_form": ReviewForm(prefix="review"),
+            "escalate_form": EscalateForm(prefix="escalate"),
+            "resolve_form": ResolveForm(prefix="resolve"),
         },
     )
 
@@ -160,7 +165,7 @@ def admin_action(request, pk, action):
     if request.method != "POST" or action not in forms_by_action:
         return redirect("complaints:admin_detail", pk=pk)
 
-    form = forms_by_action[action](request.POST)
+    form = forms_by_action[action](request.POST, prefix=action)
     if not form.is_valid():
         messages.error(request, "That action needs a note — nothing was changed.")
         return redirect("complaints:admin_detail", pk=pk)
@@ -194,6 +199,15 @@ def admin_action(request, pk, action):
     return redirect("complaints:admin_detail", pk=pk)
 
 
+def _humanise_hours(hours):
+    """A readable span: 2.4 h, or 18 min, or None when nothing is resolved yet."""
+    if hours is None:
+        return None
+    if hours < 1:
+        return "{} min".format(max(1, round(hours * 60)))
+    return "{} h".format(round(hours, 1))
+
+
 @admin_required
 def dashboard(request):
     """Volume, category and status breakdowns, and average resolution time."""
@@ -204,7 +218,10 @@ def dashboard(request):
             ExpressionWrapper(F("resolved_at") - F("created_at"), output_field=DurationField())
         )
     )["avg"]
-    average_hours = round(average.total_seconds() / 3600.0, 1) if average else None
+    average_hours = average.total_seconds() / 3600.0 if average is not None else None
+    # Rendered separately: a genuine 0.0 hours is falsy in a template, and would
+    # otherwise show as "no data" for complaints resolved within the same minute.
+    average_display = _humanise_hours(average_hours)
 
     by_category = list(
         ComplaintCategory.objects.annotate(total=Count("complaints")).order_by("-total")
@@ -225,6 +242,7 @@ def dashboard(request):
             "open_count": total - resolved.count(),
             "anonymous_count": Complaint.objects.anonymous().count(),
             "average_hours": average_hours,
+            "average_display": average_display,
             "by_category": by_category,
             "by_status": by_status,
             "max_category_total": max([c.total for c in by_category], default=0),
@@ -258,6 +276,6 @@ def export_csv(request):
             complaint.subject,
             complaint.get_status_display(),
             complaint.resolved_at.isoformat(timespec="seconds") if complaint.resolved_at else "",
-            "" if hours is None else round(hours, 1),
+            "" if hours is None else round(hours, 2),
         ])
     return response

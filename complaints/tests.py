@@ -190,9 +190,12 @@ class AdminWorkflowTests(ComplaintTestCase):
         self.login_admin()
 
     def act(self, action, **payload):
+        # Each admin form is rendered with a prefix so the four `note` fields get
+        # distinct element ids, so the POST keys carry that prefix too.
         return self.client.post(
             reverse("complaints:admin_action", args=[self.complaint.pk, action]),
-            payload, follow=True,
+            {"{}-{}".format(action, key): value for key, value in payload.items()},
+            follow=True,
         )
 
     def test_categorise_resolve_and_escalate_each_append_a_log_row(self):
@@ -244,7 +247,7 @@ class AdminWorkflowTests(ComplaintTestCase):
         self.assertEqual(
             self.client.post(
                 reverse("complaints:admin_action", args=[self.complaint.pk, "resolve"]),
-                {"note": "self-serve"},
+                {"resolve-note": "self-serve"},
             ).status_code,
             403,
         )

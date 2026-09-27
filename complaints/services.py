@@ -107,9 +107,7 @@ def _notify(complaint, status, headline=None):
     For an anonymous complaint the notice has no recipient: there is no student
     on the record to address, by design. It is read through the tracking page.
     """
-    label = headline or "Complaint {} is now {}".format(
-        complaint.reference, ComplaintStatus(status).label.lower()
-    )
+    label = headline or "Complaint is now {}".format(ComplaintStatus(status).label.lower())
     message = "{} ({})".format(label, complaint.reference)
     recipient = None
     if not complaint.is_anonymous and complaint.student_id:

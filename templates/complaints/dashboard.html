@@ -18,7 +18,7 @@
   </div></div></div>
   <div class="col-6 col-lg-3"><div class="card"><div class="card-body">
     <div class="small text-muted">Avg. resolution time</div>
-    <div class="h3 mb-0">{% if average_hours %}{{ average_hours }}<span class="fs-6 text-muted"> h</span>{% else %}—{% endif %}</div>
+    <div class="h3 mb-0">{{ average_display|default:"—" }}</div>
   </div></div></div>
 </div>
 
