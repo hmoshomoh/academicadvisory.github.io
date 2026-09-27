@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row g-4 align-items-start">
+  <div class="col-lg-7">
+    <h1 class="h3">Academic Support &amp; Complaints</h1>
+    <p class="text-muted">
+      Check your GPA and CGPA with automatic academic recommendations, and raise a
+      complaint either under your name or anonymously.
+    </p>
+    {% if not user.is_authenticated %}
+      <a class="btn btn-primary" href="{% url 'accounts:register' %}">Register as a student</a>
+      <a class="btn btn-outline-secondary" href="{% url 'accounts:login' %}">Log in</a>
+    {% else %}
+      <a class="btn btn-primary" href="{% url 'accounts:dashboard' %}">Go to my dashboard</a>
+    {% endif %}
+  </div>
+  <div class="col-lg-5">
+    <div class="card">
+      <div class="card-body">
+        <h2 class="h6">Already submitted a complaint?</h2>
+        <p class="small text-muted mb-2">
+          Check its status with your tracking reference. No login needed, and your
+          identity is never shown.
+        </p>
+        <a class="btn btn-sm btn-outline-primary" href="{% url 'complaints:track' %}">Track a complaint</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

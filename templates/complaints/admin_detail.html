@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}{{ complaint.reference }}{% endblock %}
+{% block content %}
+<a class="small" href="{% url 'complaints:admin_list' %}">&larr; All complaints</a>
+<div class="row g-3 my-3">
+  <div class="col-lg-7">
+    <div class="card"><div class="card-body">
+      <div class="d-flex justify-content-between flex-wrap">
+        <div>
+          <h1 class="h5 mb-1">{{ complaint.subject }}</h1>
+          <div class="small text-muted ref-code">{{ complaint.reference }}</div>
+        </div>
+        <span class="badge bg-{{ complaint.status_css }} align-self-start fs-6">{{ complaint.get_status_display }}</span>
+      </div>
+      <hr>
+      <dl class="row small mb-0">
+        <dt class="col-sm-4">Submitter</dt>
+        <dd class="col-sm-8">
+          {% if complaint.is_anonymous %}
+            <span class="badge bg-dark">Anonymous</span>
+            <div class="text-muted">No identity is stored for this complaint, so none can be shown.</div>
+          {% else %}
+            {{ complaint.student.display_name }} ({{ complaint.student.matric_number }})
+          {% endif %}
+        </dd>
+        <dt class="col-sm-4">Category</dt><dd class="col-sm-8">{{ complaint.category.name }}</dd>
+        <dt class="col-sm-4">Submitted</dt><dd class="col-sm-8">{{ complaint.created_at|date:"j M Y, H:i" }}</dd>
+        {% if complaint.attachment %}
+          <dt class="col-sm-4">Attachment</dt><dd class="col-sm-8"><a href="{{ complaint.attachment.url }}">Download</a></dd>
+        {% endif %}
+      </dl>
+      <p class="mt-3 mb-0">{{ complaint.body|linebreaksbr }}</p>
+      {% if complaint.resolution_note %}
+        <div class="alert alert-success mt-3 mb-0"><strong>Resolution.</strong> {{ complaint.resolution_note }}</div>
+      {% endif %}
+    </div></div>
+  </div>
+
+  <div class="col-lg-5">
+    <div class="card mb-3"><div class="card-body">
+      <h2 class="h6">Re-categorise</h2>
+      <form method="post" action="{% url 'complaints:admin_action' complaint.pk 'categorise' %}">
+        {% csrf_token %}{% include "_form.html" with form=recategorise_form %}
+        <button class="btn btn-sm btn-primary" type="submit">Update category</button>
+      </form>
+    </div></div>
+
+    {% if not complaint.is_resolved %}
+      <div class="card mb-3"><div class="card-body">
+        <h2 class="h6">Move to review</h2>
+        <form method="post" action="{% url 'complaints:admin_action' complaint.pk 'review' %}">
+          {% csrf_token %}{% include "_form.html" with form=review_form %}
+          <button class="btn btn-sm btn-outline-info" type="submit">Mark under review</button>
+        </form>
+      </div></div>
+
+      <div class="card mb-3"><div class="card-body">
+        <h2 class="h6">Escalate</h2>
+        <form method="post" action="{% url 'complaints:admin_action' complaint.pk 'escalate' %}">
+          {% csrf_token %}{% include "_form.html" with form=escalate_form %}
+          <button class="btn btn-sm btn-warning" type="submit">Escalate</button>
+        </form>
+      </div></div>
+
+      <div class="card"><div class="card-body">
+        <h2 class="h6">Resolve</h2>
+        <form method="post" action="{% url 'complaints:admin_action' complaint.pk 'resolve' %}">
+          {% csrf_token %}{% include "_form.html" with form=resolve_form %}
+          <button class="btn btn-sm btn-success" type="submit">Resolve</button>
+        </form>
+      </div></div>
+    {% else %}
+      <div class="alert alert-success">This complaint is resolved. Re-open it by escalating or moving it back to review.</div>
+      <div class="card"><div class="card-body">
+        <h2 class="h6">Re-open under review</h2>
+        <form method="post" action="{% url 'complaints:admin_action' complaint.pk 'review' %}">
+          {% csrf_token %}{% include "_form.html" with form=review_form %}
+          <button class="btn btn-sm btn-outline-info" type="submit">Re-open</button>
+        </form>
+      </div></div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card"><div class="card-body">
+  <h2 class="h6">Audit trail</h2>
+  {% include "complaints/_log.html" %}
+</div></div>
+{% endblock %}

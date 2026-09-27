@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Advisory requests{% endblock %}
+{% block content %}
+<h1 class="h5 mb-3">Advisory requests</h1>
+<div class="list-group">
+  {% for advisory in requests %}
+    <div class="list-group-item">
+      <div class="d-flex justify-content-between flex-wrap">
+        <div>
+          <strong>{{ advisory.subject }}</strong>
+          <div class="small text-muted">{{ advisory.student.display_name }} · {{ advisory.student.matric_number }} · {{ advisory.created_at|date:"j M Y, H:i" }}</div>
+        </div>
+        {% if advisory.answered %}
+          <span class="badge bg-success align-self-center">Answered</span>
+        {% else %}
+          <a class="btn btn-sm btn-primary align-self-center" href="{% url 'academics:advisory_respond' advisory.pk %}">Respond</a>
+        {% endif %}
+      </div>
+      <p class="small mt-2 mb-0">{{ advisory.body }}</p>
+      {% if advisory.answered %}<div class="alert alert-light border small mt-2 mb-0"><strong>Your response:</strong> {{ advisory.response }}</div>{% endif %}
+    </div>
+  {% empty %}
+    <div class="list-group-item text-muted">No requests yet.</div>
+  {% endfor %}
+</div>
+{% endblock %}

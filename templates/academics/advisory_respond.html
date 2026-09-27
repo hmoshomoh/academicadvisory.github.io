@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Respond{% endblock %}
+{% block content %}
+<div class="row justify-content-center"><div class="col-md-8">
+  <div class="card"><div class="card-body">
+    <h1 class="h6">{{ advisory.subject }}</h1>
+    <div class="small text-muted mb-2">{{ advisory.student.display_name }} · {{ advisory.student.matric_number }}</div>
+    <p class="mb-3">{{ advisory.body }}</p>
+    <form method="post">{% csrf_token %}
+      {% include "_form.html" %}
+      <button class="btn btn-primary" type="submit">Send response</button>
+      <a class="btn btn-link" href="{% url 'academics:adviser_requests' %}">Cancel</a>
+    </form>
+  </div></div>
+</div></div>
+{% endblock %}

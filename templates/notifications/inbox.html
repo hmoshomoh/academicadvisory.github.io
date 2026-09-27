@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Notifications{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h5 mb-0">Notifications</h1>
+  {% if unread_notification_count %}
+    <form method="post" action="{% url 'notifications:mark_all_read' %}">
+      {% csrf_token %}<button class="btn btn-sm btn-outline-secondary" type="submit">Mark all read</button>
+    </form>
+  {% endif %}
+</div>
+<div class="list-group">
+  {% for notification in notifications %}
+    <div class="list-group-item d-flex justify-content-between align-items-center {% if notification.unread %}bg-white{% else %}bg-light{% endif %}">
+      <div>
+        {% if notification.unread %}<span class="badge bg-primary me-1">New</span>{% endif %}
+        {{ notification.message }}
+        <div class="small text-muted">{{ notification.created_at|date:"j M Y, H:i" }}</div>
+      </div>
+      {% if notification.unread %}
+        <form method="post" action="{% url 'notifications:mark_read' notification.pk %}">
+          {% csrf_token %}<button class="btn btn-sm btn-link" type="submit">Mark read</button>
+        </form>
+      {% endif %}
+    </div>
+  {% empty %}
+    <div class="list-group-item text-muted">Nothing here yet.</div>
+  {% endfor %}
+</div>
+{% endblock %}

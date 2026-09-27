@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}My academics{% endblock %}
+{% block content %}
+<div class="row g-3 mb-3">
+  <div class="col-md-4">
+    <div class="card"><div class="card-body">
+      <div class="text-muted small">CGPA</div>
+      <div class="display-6">{{ cgpa|default:"—" }}</div>
+      <div class="small text-muted">on a 5.00 scale</div>
+    </div></div>
+  </div>
+  <div class="col-md-8">
+    <div class="card"><div class="card-body">
+      <h1 class="h5 mb-1">{{ student.display_name }}</h1>
+      <div class="small text-muted">{{ student.matric_number }} · {{ student.programme|default:"Programme not set" }}</div>
+      <div class="small text-muted">Adviser: {{ student.adviser|default:"not assigned yet" }}</div>
+      <a class="btn btn-sm btn-outline-primary mt-2" href="{% url 'academics:advisory_request_create' %}">Ask my adviser</a>
+    </div></div>
+  </div>
+</div>
+
+<h2 class="h5">Semesters</h2>
+{% include "academics/_semester_table.html" %}
+
+<h2 class="h5 mt-4">My advisory requests</h2>
+<div class="list-group mb-3">
+  {% for advisory in advisory_requests %}
+    <div class="list-group-item">
+      <div class="d-flex justify-content-between">
+        <strong>{{ advisory.subject }}</strong>
+        <span class="badge bg-{% if advisory.answered %}success{% else %}secondary{% endif %}">
+          {% if advisory.answered %}Answered{% else %}Awaiting reply{% endif %}</span>
+      </div>
+      <p class="small text-muted mb-1">{{ advisory.body }}</p>
+      {% if advisory.answered %}
+        <div class="alert alert-light border mb-0 small">
+          <strong>Adviser:</strong> {{ advisory.response }}
+        </div>
+      {% endif %}
+    </div>
+  {% empty %}
+    <div class="list-group-item text-muted">You have not asked your adviser anything yet.</div>
+  {% endfor %}
+</div>
+{% endblock %}

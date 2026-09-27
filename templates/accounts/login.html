@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Log in{% endblock %}
+{% block content %}
+<div class="row justify-content-center"><div class="col-md-6">
+  <div class="card"><div class="card-body">
+    <h1 class="h5 mb-3">Log in</h1>
+    <form method="post">{% csrf_token %}
+      {% include "_form.html" %}
+      <button class="btn btn-primary w-100" type="submit">Log in</button>
+    </form>
+    <p class="small mt-3 mb-0">No account? <a href="{% url 'accounts:register' %}">Register as a student</a>.</p>
+  </div></div>
+</div></div>
+{% endblock %}

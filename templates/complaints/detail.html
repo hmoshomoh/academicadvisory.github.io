@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}{{ complaint.reference }}{% endblock %}
+{% block content %}
+<a class="small" href="{% url 'complaints:my_complaints' %}">&larr; My complaints</a>
+<div class="card my-3"><div class="card-body">
+  <div class="d-flex justify-content-between flex-wrap">
+    <div>
+      <h1 class="h5 mb-1">{{ complaint.subject }}</h1>
+      <div class="small text-muted ref-code">{{ complaint.reference }}</div>
+    </div>
+    <span class="badge bg-{{ complaint.status_css }} align-self-start fs-6">{{ complaint.get_status_display }}</span>
+  </div>
+  <hr>
+  <dl class="row small mb-0">
+    <dt class="col-sm-3">Category</dt><dd class="col-sm-9">{{ complaint.category.name }}</dd>
+    <dt class="col-sm-3">Submitted</dt><dd class="col-sm-9">{{ complaint.created_at|date:"j M Y, H:i" }}</dd>
+    {% if complaint.attachment %}
+      <dt class="col-sm-3">Attachment</dt><dd class="col-sm-9"><a href="{{ complaint.attachment.url }}">Download</a></dd>
+    {% endif %}
+  </dl>
+  <p class="mt-3 mb-0">{{ complaint.body|linebreaksbr }}</p>
+  {% if complaint.resolution_note %}
+    <div class="alert alert-success mt-3 mb-0"><strong>Resolution.</strong> {{ complaint.resolution_note }}</div>
+  {% endif %}
+</div></div>
+
+<div class="card"><div class="card-body">
+  <h2 class="h6">Status history</h2>
+  {% include "complaints/_log.html" %}
+</div></div>
+{% endblock %}

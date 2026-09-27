@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Complaints{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center flex-wrap mb-3">
+  <h1 class="h5 mb-0">All complaints <span class="text-muted fs-6">({{ open_count }} open)</span></h1>
+  <div>
+    <a class="btn btn-sm btn-outline-primary" href="{% url 'complaints:dashboard' %}">Analytics dashboard</a>
+    <a class="btn btn-sm btn-outline-secondary" href="{% url 'complaints:export_csv' %}">Export CSV</a>
+  </div>
+</div>
+
+<form method="get" class="row g-2 mb-3">
+  <div class="col-sm-4">
+    <select name="status" class="form-select form-select-sm">
+      {% for value, label in statuses %}
+        <option value="{{ value }}" {% if value == selected_status %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-sm-4">
+    <select name="category" class="form-select form-select-sm">
+      <option value="">All categories</option>
+      {% for category in categories %}
+        <option value="{{ category.pk }}" {% if category.pk|stringformat:"s" == selected_category %}selected{% endif %}>{{ category.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-sm-4"><button class="btn btn-sm btn-primary w-100" type="submit">Filter</button></div>
+</form>
+
+<div class="card"><div class="card-body table-responsive">
+  <table class="table align-middle mb-0">
+    <thead><tr><th>Reference</th><th>Subject</th><th>Submitter</th><th>Category</th><th>Status</th><th>Submitted</th><th></th></tr></thead>
+    <tbody>
+    {% for complaint in complaints %}
+      <tr>
+        <td class="ref-code small">{{ complaint.reference }}</td>
+        <td>{{ complaint.subject }}</td>
+        <td class="small">
+          {% if complaint.is_anonymous %}<span class="badge bg-dark">Anonymous</span>
+          {% else %}{{ complaint.submitter_label }}{% endif %}
+        </td>
+        <td class="small text-muted">{{ complaint.category.name }}</td>
+        <td><span class="badge bg-{{ complaint.status_css }}">{{ complaint.get_status_display }}</span></td>
+        <td class="small text-muted text-nowrap">{{ complaint.created_at|date:"j M Y" }}</td>
+        <td class="text-end"><a class="btn btn-sm btn-outline-secondary"
+          href="{% url 'complaints:admin_detail' complaint.pk %}">Open</a></td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="7" class="text-muted">No complaints match this filter.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div></div>
+{% endblock %}

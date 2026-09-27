@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Submit a complaint{% endblock %}
+{% block content %}
+<div class="row justify-content-center"><div class="col-lg-8">
+  <div class="card"><div class="card-body">
+    <h1 class="h5">Submit a complaint</h1>
+    <p class="small text-muted">
+      You will get a tracking reference on the next screen. Keep it — it is how you
+      check the status later.
+    </p>
+    <form method="post" enctype="multipart/form-data" novalidate>{% csrf_token %}
+      {% include "_form.html" %}
+      <button class="btn btn-primary" type="submit">Submit complaint</button>
+    </form>
+  </div></div>
+</div></div>
+{% endblock %}

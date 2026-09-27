@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Track a complaint{% endblock %}
+{% block content %}
+<div class="row justify-content-center"><div class="col-lg-8">
+  <div class="card mb-3"><div class="card-body">
+    <h1 class="h5">Track a complaint</h1>
+    <p class="small text-muted">
+      Enter the reference you were given at submission. No login is needed, and this
+      page never shows who submitted the complaint.
+    </p>
+    <form method="get" class="row g-2 align-items-end">
+      <div class="col-sm-8">{% include "_form.html" %}</div>
+      <div class="col-sm-4 mb-3"><button class="btn btn-primary w-100" type="submit">Check status</button></div>
+    </form>
+  </div></div>
+
+  {% if complaint %}
+    <div class="card mb-3"><div class="card-body">
+      <div class="d-flex justify-content-between flex-wrap">
+        <div>
+          <div class="ref-code small text-muted">{{ complaint.reference }}</div>
+          <h2 class="h6 mb-0">{{ complaint.subject }}</h2>
+        </div>
+        <span class="badge bg-{{ complaint.status_css }} align-self-start fs-6">{{ complaint.get_status_display }}</span>
+      </div>
+      <dl class="row small mt-3 mb-0">
+        <dt class="col-sm-4">Category</dt><dd class="col-sm-8">{{ complaint.category.name }}</dd>
+        <dt class="col-sm-4">Submitted</dt><dd class="col-sm-8">{{ complaint.created_at|date:"j M Y, H:i" }}</dd>
+        <dt class="col-sm-4">Submitted as</dt>
+        <dd class="col-sm-8">{% if complaint.is_anonymous %}Anonymous{% else %}Named (identity visible only to you and admins){% endif %}</dd>
+      </dl>
+      {% if complaint.resolution_note %}
+        <div class="alert alert-success mt-3 mb-0"><strong>Resolution.</strong> {{ complaint.resolution_note }}</div>
+      {% endif %}
+    </div></div>
+
+    <div class="card mb-3"><div class="card-body">
+      <h2 class="h6">Updates</h2>
+      <ul class="list-unstyled small mb-0">
+        {% for update in updates %}
+          <li class="mb-1">· {{ update.message }} <span class="text-muted">— {{ update.created_at|date:"j M Y, H:i" }}</span></li>
+        {% empty %}
+          <li class="text-muted">No updates yet.</li>
+        {% endfor %}
+      </ul>
+    </div></div>
+
+    <div class="card"><div class="card-body">
+      <h2 class="h6">Status history</h2>
+      {% include "complaints/_log.html" %}
+    </div></div>
+  {% elif searched %}
+    <div class="alert alert-warning">No complaint matches that reference. Check it and try again.</div>
+  {% endif %}
+</div></div>
+{% endblock %}

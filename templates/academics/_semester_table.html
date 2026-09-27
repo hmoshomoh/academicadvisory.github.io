@@ -1,0 +1,36 @@
+{% for item in semesters %}
+  <div class="card mb-3">
+    <div class="card-body">
+      <div class="d-flex justify-content-between flex-wrap">
+        <h2 class="h6 mb-2">{{ item.record.label }}</h2>
+        <span class="badge bg-primary align-self-start">GPA {{ item.gpa|default:"—" }}</span>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-sm align-middle mb-2">
+          <thead><tr><th>Course</th><th>Title</th><th class="text-end">Units</th><th class="text-end">Grade</th></tr></thead>
+          <tbody>
+          {% for course in item.record.course_results.all %}
+            <tr>
+              <td class="ref-code">{{ course.course_code }}</td>
+              <td class="text-muted small">{{ course.course_title }}</td>
+              <td class="text-end">{{ course.credit_units }}</td>
+              <td class="text-end fw-semibold">{{ course.grade }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="4" class="text-muted">No courses recorded for this semester.</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% for rec in item.recommendations %}
+        <div class="alert alert-{{ rec.css_class }} mb-2">
+          <strong>{{ rec.get_kind_display }}.</strong> {{ rec.message }}
+        </div>
+      {% empty %}
+        <p class="small text-muted mb-0">No recommendation generated for this semester yet.</p>
+      {% endfor %}
+    </div>
+  </div>
+{% empty %}
+  <div class="alert alert-secondary">No academic records have been entered yet.</div>
+{% endfor %}

@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Analytics dashboard{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center flex-wrap mb-3">
+  <h1 class="h5 mb-0">Complaints analytics</h1>
+  <a class="btn btn-sm btn-outline-secondary" href="{% url 'complaints:export_csv' %}">Export CSV</a>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-lg-3"><div class="card"><div class="card-body">
+    <div class="small text-muted">Total complaints</div><div class="h3 mb-0">{{ total }}</div>
+  </div></div></div>
+  <div class="col-6 col-lg-3"><div class="card"><div class="card-body">
+    <div class="small text-muted">Open</div><div class="h3 mb-0">{{ open_count }}</div>
+  </div></div></div>
+  <div class="col-6 col-lg-3"><div class="card"><div class="card-body">
+    <div class="small text-muted">Anonymous</div><div class="h3 mb-0">{{ anonymous_count }}</div>
+  </div></div></div>
+  <div class="col-6 col-lg-3"><div class="card"><div class="card-body">
+    <div class="small text-muted">Avg. resolution time</div>
+    <div class="h3 mb-0">{% if average_hours %}{{ average_hours }}<span class="fs-6 text-muted"> h</span>{% else %}—{% endif %}</div>
+  </div></div></div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-7"><div class="card h-100"><div class="card-body">
+    <h2 class="h6">Volume by category</h2>
+    {% for category in by_category %}
+      <div class="mb-2">
+        <div class="d-flex justify-content-between small"><span>{{ category.name }}</span><span>{{ category.total }}</span></div>
+        <div class="bar" style="width: {% widthratio category.total max_category_total 100 %}%"></div>
+      </div>
+    {% empty %}
+      <p class="text-muted small mb-0">No categories defined yet.</p>
+    {% endfor %}
+  </div></div></div>
+
+  <div class="col-lg-5"><div class="card h-100"><div class="card-body">
+    <h2 class="h6">By status</h2>
+    <table class="table table-sm mb-0">
+      <tbody>
+      {% for row in by_status %}
+        <tr><td class="small">{{ row.label }}</td><td class="text-end fw-semibold">{{ row.total }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    <p class="small text-muted mt-3 mb-0">
+      Resolved complaints: {{ resolved_count }}. Average resolution time counts only
+      complaints that reached Resolved.
+    </p>
+  </div></div></div>
+</div>
+{% endblock %}

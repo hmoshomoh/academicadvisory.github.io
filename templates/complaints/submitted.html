@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Complaint submitted{% endblock %}
+{% block content %}
+<div class="row justify-content-center"><div class="col-lg-7">
+  <div class="card"><div class="card-body text-center">
+    <h1 class="h5">Complaint submitted</h1>
+    <p class="text-muted small mb-3">Your tracking reference is</p>
+    <p class="display-6 ref-code">{{ complaint.reference }}</p>
+    {% if anonymous %}
+      <div class="alert alert-warning text-start">
+        <strong>This complaint is anonymous.</strong> Your name was not stored with it,
+        so there is no way to look it up from your account — and no way for staff to
+        find out who submitted it. This reference is the <em>only</em> way to follow up.
+        Save it now.
+      </div>
+    {% else %}
+      <p class="small text-muted">
+        This complaint is linked to your account, so you can also find it under
+        <a href="{% url 'complaints:my_complaints' %}">My complaints</a>.
+      </p>
+    {% endif %}
+    <a class="btn btn-outline-primary" href="{% url 'complaints:track' %}?reference={{ complaint.reference }}">Check its status</a>
+  </div></div>
+</div></div>
+{% endblock %}
