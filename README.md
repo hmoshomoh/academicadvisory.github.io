@@ -401,5 +401,3 @@ Two files are worth reading if you want to understand the rules:
 
 - `academics/grading.py` — the grade scale and thresholds, defined once, nowhere else.
 - `complaints/services.py` — the only place a complaint can be changed, so the audit trail and the notification can never be skipped.
-
-`EXPECTATIONS.md` lists every requirement from the original specification and how each one was checked.
