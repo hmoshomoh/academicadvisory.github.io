@@ -7,6 +7,26 @@ import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+
+def _load_env_file(path):
+    """Read KEY=VALUE lines from a .env file into the environment.
+
+    Hand-rolled so the project needs no extra dependency. Anything already set
+    in the real environment wins, so a hosting platform's own settings are never
+    overridden by a file that happens to be lying around.
+    """
+    if not path.exists():
+        return
+    for raw_line in path.read_text().splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        os.environ.setdefault(key.strip(), value.strip().strip("\"'"))
+
+
+_load_env_file(BASE_DIR / ".env")
+
 SECRET_KEY = os.environ.get("SECRET_KEY", "dev-only-insecure-key-change-in-env")
 DEBUG = os.environ.get("DEBUG", "True").lower() in ("1", "true", "yes")
 ALLOWED_HOSTS = [h for h in os.environ.get("ALLOWED_HOSTS", "*").split(",") if h]

@@ -79,6 +79,8 @@ Wait for it to finish. It downloads Django and six other packages.
 
 ### Step 6: Make sure PostgreSQL is running
 
+On **Windows**, PostgreSQL starts by itself after installation.
+
 On **Mac** (if you installed it with Homebrew):
 
 ```bash
@@ -91,9 +93,7 @@ On **Linux**:
 sudo service postgresql start
 ```
 
-On **Windows**, PostgreSQL usually starts by itself after installation.
-
-To check it worked:
+To check it worked, type:
 
 ```bash
 pg_isready
@@ -103,13 +103,48 @@ You want to see `accepting connections`.
 
 ### Step 7: Create the database
 
+**This step works differently on Windows than on Mac and Linux. Read the section for your computer.**
+
+#### If you are on Windows
+
+When you installed PostgreSQL, it asked you to choose a password and you typed one in. **You need that password now.** PostgreSQL also created a single user account called `postgres`. It did not create one named after you.
+
+Type this command exactly as written — do not substitute anything into it:
+
+```bash
+createdb -U postgres acad_app
+```
+
+It will say `Password:` and wait. Type the password you chose when you installed PostgreSQL and press Enter. **Nothing appears on screen as you type the password — no dots, no stars. That is normal. Keep typing and press Enter.**
+
+If it worked, nothing is printed and you get your prompt back.
+
+Now tell the application that same password. Create a file named `.env` in the project folder:
+
+```bash
+notepad .env
+```
+
+Notepad will ask whether to create a new file. Say yes. Type this one line into it, replacing `YOURPASSWORD` with the password you just used:
+
+```
+DATABASE_URL=postgres://postgres:YOURPASSWORD@localhost:5432/acad_app
+```
+
+Save the file and close Notepad. **When saving, make sure the filename is exactly `.env` and not `.env.txt`** — in Notepad's save dialog, set "Save as type" to "All Files".
+
+#### If you are on Mac or Linux
+
 ```bash
 createdb acad_app
 ```
 
-This creates an empty database named `acad_app`. It prints nothing if it worked — that is normal.
+Nothing is printed if it worked. That is normal, and you will not be asked for a password.
 
-If it says the database already exists, that is fine. Move on.
+#### Either way
+
+If it says the database already exists, that is fine. Move on to Step 8.
+
 
 ### Step 8: Build the tables inside the database
 
@@ -374,7 +409,23 @@ Two things to know:
 
 **`django-admin: command not found` or `No module named django`** — you are not in the virtual space. Run the Step 4 command again and check your prompt shows `(.venv)`.
 
+**Windows: `running scripts is disabled on this system`** when you try to activate in Step 4 — PowerShell blocks scripts by default. Either use Command Prompt (search for `cmd`) instead of PowerShell, or run this once in PowerShell and then try Step 4 again:
+
+```bash
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+```
+
 **`connection refused` or `could not connect to server`** — PostgreSQL is not running. See Step 6.
+
+**`FATAL: password authentication failed for user "YourName"`** (where YourName is your Windows login name) — you left out the `-U postgres` part. PostgreSQL on Windows has no user account named after you; it only has one called `postgres`. Run the command again exactly as written in Step 7, including `-U postgres`.
+
+**`FATAL: role "YourName" does not exist`** — same cause as above. Use `-U postgres`.
+
+**It keeps asking for a password and rejecting it** — the password it wants is the one you chose while installing PostgreSQL, not your Windows login password. If you cannot remember it, the simplest fix is to uninstall PostgreSQL, reinstall it, and write the new password down before continuing.
+
+**You typed the password and nothing appeared on screen** — that is deliberate. Password entry is always invisible in a terminal. Type it and press Enter.
+
+**`FATAL: password authentication failed` when running `migrate` or `runserver`, even though `createdb` worked** — the database exists but the application does not know the password. On Windows, create the `.env` file described at the end of Step 7. Check the file is named `.env` exactly, with no `.txt` on the end.
 
 **`database "acad_app" does not exist`** — you skipped Step 7.
 
