@@ -145,7 +145,17 @@ Nothing is printed if it worked. That is normal, and you will not be asked for a
 
 #### Either way
 
-If it says the database already exists, that is fine. Move on to Step 8.
+If it says the database already exists, that is fine.
+
+Now check that the application can actually reach the database. Type:
+
+```bash
+python manage.py checkdb
+```
+
+If it ends with **`Connected successfully.`**, go on to Step 8.
+
+If it ends with **`Could not connect.`**, do not continue — it prints the exact reason and what to do about it. Fix that first, then run `checkdb` again. Continuing past this point will only produce the same error with a longer message.
 
 
 ### Step 8: Build the tables inside the database
@@ -407,6 +417,15 @@ Two things to know:
 
 ## If something goes wrong
 
+**For anything involving the database, run this first:**
+
+```bash
+python manage.py checkdb
+```
+
+It shows which database settings are actually in use, whether your `.env` file was found, tries to connect, and explains any failure in plain language.
+
+
 **`command not found: python3`** — Python is not installed. See Step 1.
 
 **`django-admin: command not found` or `No module named django`** — you are not in the virtual space. Run the Step 4 command again and check your prompt shows `(.venv)`.
@@ -432,6 +451,13 @@ That allows scripts you wrote locally to run, while still requiring scripts down
 **It keeps asking for a password and rejecting it** — the password it wants is the one you chose while installing PostgreSQL, not your Windows login password. If you cannot remember it, the simplest fix is to uninstall PostgreSQL, reinstall it, and write the new password down before continuing.
 
 **You typed the password and nothing appeared on screen** — that is deliberate. Password entry is always invisible in a terminal. Type it and press Enter.
+
+**`fe_sendauth: no password supplied`** — the application connected with no password at all, which means it never read your `.env` file. Two possible causes:
+
+1. **Your copy of the code is older than the `.env` feature.** Run `git pull` in the project folder, then try again. This is the most common cause.
+2. **The file is misnamed or in the wrong folder.** It must be called exactly `.env` (not `.env.txt`) and sit in the same folder as `manage.py`.
+
+Run `python manage.py checkdb` to see which it is — it reports whether a `.env` file was found and where it looked.
 
 **`FATAL: password authentication failed` when running `migrate` or `runserver`, even though `createdb` worked** — the database exists but the application does not know the password. On Windows, create the `.env` file described at the end of Step 7. Check the file is named `.env` exactly, with no `.txt` on the end.
 
