@@ -67,6 +67,8 @@ On **Windows**:
 .venv\Scripts\activate
 ```
 
+**Windows users: use Command Prompt, not PowerShell.** Press `Win + R`, type `cmd` and press Enter to open it. PowerShell blocks this step by default with a "running scripts is disabled on this system" error. Command Prompt has no such restriction, and everything in this guide works there. (If you would rather use PowerShell anyway, see the troubleshooting section at the bottom.)
+
 Your terminal prompt should now start with `(.venv)`. **You must do this step every time you open a new terminal to work on this project.** If the prompt does not say `(.venv)`, the later commands will fail.
 
 ### Step 5: Install the add-ons
@@ -409,11 +411,17 @@ Two things to know:
 
 **`django-admin: command not found` or `No module named django`** — you are not in the virtual space. Run the Step 4 command again and check your prompt shows `(.venv)`.
 
-**Windows: `running scripts is disabled on this system`** when you try to activate in Step 4 — PowerShell blocks scripts by default. Either use Command Prompt (search for `cmd`) instead of PowerShell, or run this once in PowerShell and then try Step 4 again:
+**Windows: `running scripts is disabled on this system`** when you try to activate in Step 4 — this is a PowerShell setting, not a problem with the project. Command Prompt and PowerShell run different files for the same command: Command Prompt runs `activate.bat`, which it allows, while PowerShell runs `activate.ps1`, which it blocks by default.
+
+The easiest fix is to use Command Prompt instead: press `Win + R`, type `cmd`, press Enter, then `cd` back into the project folder and continue. Nothing you have already done is lost — the `.venv` folder works from either shell.
+
+If you would rather stay in PowerShell, run this once and answer `Y`:
 
 ```bash
 Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
 ```
+
+That allows scripts you wrote locally to run, while still requiring scripts downloaded from the internet to be signed. It applies to your Windows account only and needs no administrator rights. To undo it later: `Set-ExecutionPolicy -Scope CurrentUser Restricted`.
 
 **`connection refused` or `could not connect to server`** — PostgreSQL is not running. See Step 6.
 
