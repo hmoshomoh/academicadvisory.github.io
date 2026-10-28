@@ -1,4 +1,5 @@
 from django import forms
+from django.contrib.auth import authenticate
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.models import User
 from django.db import transaction
@@ -70,3 +71,39 @@ class BootstrapLoginForm(AuthenticationForm):
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
             field.widget.attrs.update(BOOTSTRAP_INPUT)
+
+    def clean(self):
+        username = self.cleaned_data.get("username")
+        password = self.cleaned_data.get("password")
+
+        if username and password:
+            raw_input = username.strip()
+            # 1. Standard authentication by exact username
+            self.user_cache = authenticate(self.request, username=raw_input, password=password)
+
+            # 2. Matric-number or case-insensitive resolution
+            if self.user_cache is None:
+                # Match by matric number (e.g. "CSC/2022/001")
+                student = Student.objects.filter(matric_number__iexact=raw_input).first()
+                if not student:
+                    # Match by normalized stripped matric (e.g. "CSC2022001" or "csc2022001")
+                    stripped = raw_input.replace("/", "").lower()
+                    student = Student.objects.filter(user__username__iexact=stripped).first()
+                if student:
+                    self.user_cache = authenticate(
+                        self.request, username=student.user.username, password=password
+                    )
+                else:
+                    # Match general user case-insensitively
+                    user = User.objects.filter(username__iexact=raw_input).first()
+                    if user:
+                        self.user_cache = authenticate(
+                            self.request, username=user.username, password=password
+                        )
+
+            if self.user_cache is None:
+                raise self.get_invalid_login_error()
+            else:
+                self.confirm_login_allowed(self.user_cache)
+
+        return self.cleaned_data
