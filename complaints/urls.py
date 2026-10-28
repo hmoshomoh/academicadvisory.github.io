@@ -9,6 +9,7 @@ urlpatterns = [
     path("submitted/<str:reference>/", views.submitted, name="submitted"),
     path("mine/", views.my_complaints, name="my_complaints"),
     path("mine/<int:pk>/", views.my_complaint_detail, name="my_complaint_detail"),
+    path("<int:pk>/attachment/", views.download_attachment, name="download_attachment"),
     path("track/", views.track, name="track"),
     path("manage/", views.admin_list, name="admin_list"),
     path("manage/<int:pk>/", views.admin_detail, name="admin_detail"),

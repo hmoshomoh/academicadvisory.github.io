@@ -11,11 +11,11 @@ urlpatterns = [
     path("complaints/", include("complaints.urls")),
     path("notifications/", include("notifications.urls")),
     path("django-admin/", admin.site.urls),
-    # Complaint attachments are served by Django in both DEBUG and production.
-    # That is enough for a college MVP on a single PaaS dyno; note that a PaaS
-    # filesystem is ephemeral, so uploads do not survive a redeploy unless the
-    # platform provides a persistent disk.
-    re_path(
-        r"^media/(?P<path>.*)$", serve, {"document_root": settings.MEDIA_ROOT}
-    ),
 ]
+
+if settings.DEBUG:
+    urlpatterns += [
+        re_path(
+            r"^media/(?P<path>.*)$", serve, {"document_root": settings.MEDIA_ROOT}
+        ),
+    ]

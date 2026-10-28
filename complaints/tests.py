@@ -64,7 +64,7 @@ class SubmissionTests(ComplaintTestCase):
         suffixes = [r.split("-")[1] for r in references]
         self.assertFalse(any(s.isdigit() and int(s) in (1, 2, 3, 4, 5) for s in suffixes))
         for reference in references:
-            self.assertNotIn(str(self.student.pk), reference.split("-")[1])
+            self.assertNotEqual(reference.split("-")[1], str(self.student.pk))
 
     def test_attachment_is_stored_and_retrievable(self):
         upload = SimpleUploadedFile("evidence.txt", b"proof", content_type="text/plain")

@@ -1,10 +1,14 @@
 import csv
+import os
 
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
 from django.db.models import Avg, Count, DurationField, ExpressionWrapper, F
-from django.http import HttpResponse
+from django.http import FileResponse, Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
+from accounts import roles
 from accounts.decorators import admin_required, student_required
 from accounts.models import Student
 
@@ -80,6 +84,32 @@ def my_complaint_detail(request, pk):
         request,
         "complaints/detail.html",
         {"complaint": complaint, "logs": complaint.status_logs.all(), "viewer": "student"},
+    )
+
+
+@login_required
+def download_attachment(request, pk):
+    """Secure attachment download with strict authorization checks."""
+    complaint = get_object_or_404(Complaint, pk=pk)
+    if not complaint.attachment:
+        raise Http404("No attachment exists for this complaint.")
+
+    is_admin = roles.is_admin(request.user)
+    is_owner = (
+        roles.is_student(request.user)
+        and complaint.student_id is not None
+        and complaint.student.user_id == request.user.id
+    )
+
+    if not (is_admin or is_owner):
+        raise PermissionDenied("You do not have permission to download this attachment.")
+
+    ext = os.path.splitext(complaint.attachment.name)[1]
+    download_filename = "complaint-{}-attachment{}".format(complaint.reference, ext)
+    return FileResponse(
+        complaint.attachment.open("rb"),
+        as_attachment=True,
+        filename=download_filename,
     )
 
 

@@ -1,20 +1,17 @@
 """Django settings for the Academic Support & Complaints System."""
 
 import os
+import sys
 from pathlib import Path
 
 import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+IS_TESTING = "test" in sys.argv
 
 
 def _load_env_file(path):
-    """Read KEY=VALUE lines from a .env file into the environment.
-
-    Hand-rolled so the project needs no extra dependency. Anything already set
-    in the real environment wins, so a hosting platform's own settings are never
-    overridden by a file that happens to be lying around.
-    """
+    """Read KEY=VALUE lines from a .env file into the environment."""
     if not path.exists():
         return
     for raw_line in path.read_text().splitlines():
@@ -22,16 +19,46 @@ def _load_env_file(path):
         if not line or line.startswith("#") or "=" not in line:
             continue
         key, value = line.split("=", 1)
+        # Anything already set in the real environment wins
         os.environ.setdefault(key.strip(), value.strip().strip("\"'"))
 
 
 _load_env_file(BASE_DIR / ".env")
 
-SECRET_KEY = os.environ.get("SECRET_KEY", "dev-only-insecure-key-change-in-env")
-DEBUG = os.environ.get("DEBUG", "True").lower() in ("1", "true", "yes")
-ALLOWED_HOSTS = [h for h in os.environ.get("ALLOWED_HOSTS", "*").split(",") if h]
+DEFAULT_INSECURE_SECRET = "dev-only-insecure-key-change-in-env"
+SECRET_KEY = os.environ.get("SECRET_KEY", DEFAULT_INSECURE_SECRET)
+
+raw_debug = os.environ.get("DJANGO_DEBUG")
+if raw_debug is not None:
+    DEBUG = raw_debug.lower() in ("1", "true", "yes", "t", "dev", "development")
+else:
+    env_debug = os.environ.get("DEBUG", "True")
+    if env_debug.lower() == "release":
+        DEBUG = True
+    else:
+        DEBUG = env_debug.lower() in ("1", "true", "yes", "t", "dev", "development")
+
+if not DEBUG and not IS_TESTING:
+    if not SECRET_KEY or SECRET_KEY == DEFAULT_INSECURE_SECRET:
+        raise ValueError(
+            "A secure SECRET_KEY environment variable must be set when DEBUG is False."
+        )
+    allowed_hosts_env = os.environ.get("ALLOWED_HOSTS", "")
+    ALLOWED_HOSTS = [h.strip() for h in allowed_hosts_env.split(",") if h.strip()]
+    if not ALLOWED_HOSTS or "*" in ALLOWED_HOSTS:
+        raise ValueError(
+            "ALLOWED_HOSTS must be explicitly defined and cannot contain '*' when DEBUG is False."
+        )
+else:
+    ALLOWED_HOSTS = [
+        h.strip() for h in os.environ.get("ALLOWED_HOSTS", "*").split(",") if h.strip()
+    ]
+    if "testserver" not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append("testserver")
+    PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
+
 CSRF_TRUSTED_ORIGINS = [
-    o for o in os.environ.get("CSRF_TRUSTED_ORIGINS", "").split(",") if o
+    o.strip() for o in os.environ.get("CSRF_TRUSTED_ORIGINS", "").split(",") if o.strip()
 ]
 
 INSTALLED_APPS = [
@@ -46,6 +73,10 @@ INSTALLED_APPS = [
     "complaints",
     "notifications",
 ]
+
+AWS_STORAGE_BUCKET_NAME = os.environ.get("AWS_STORAGE_BUCKET_NAME")
+if AWS_STORAGE_BUCKET_NAME:
+    INSTALLED_APPS.append("storages")
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -80,15 +111,18 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
+DATABASE_URL = os.environ.get(
+    "DATABASE_URL",
+    "postgres://{user}@localhost:5432/acad_app".format(
+        user=os.environ.get("USER", "postgres")
+    ),
+)
+
 DATABASES = {
     "default": dj_database_url.parse(
-        os.environ.get(
-            "DATABASE_URL",
-            "postgres://{user}@localhost:5432/acad_app".format(
-                user=os.environ.get("USER", "postgres")
-            ),
-        ),
-        conn_max_age=600,
+        DATABASE_URL,
+        conn_max_age=600 if not DEBUG else 0,
+        conn_health_checks=True,
     )
 }
 
@@ -107,12 +141,30 @@ USE_TZ = True
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [BASE_DIR / "static"] if (BASE_DIR / "static").exists() else []
-STORAGES = {
-    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
-    "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"
-    },
-}
+
+if AWS_STORAGE_BUCKET_NAME:
+    AWS_S3_REGION_NAME = os.environ.get("AWS_S3_REGION_NAME")
+    AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID")
+    AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY")
+    AWS_S3_ENDPOINT_URL = os.environ.get("AWS_S3_ENDPOINT_URL")
+    AWS_S3_CUSTOM_DOMAIN = os.environ.get("AWS_S3_CUSTOM_DOMAIN")
+    AWS_S3_FILE_OVERWRITE = False
+    AWS_DEFAULT_ACL = None
+    STORAGES = {
+        "default": {
+            "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+        },
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"
+        },
+    }
+else:
+    STORAGES = {
+        "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"
+        },
+    }
 
 MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
@@ -127,11 +179,15 @@ LOGOUT_REDIRECT_URL = "accounts:login"
 COMPLAINT_ATTACHMENT_MAX_BYTES = 5 * 1024 * 1024
 COMPLAINT_ATTACHMENT_EXTENSIONS = ["pdf", "png", "jpg", "jpeg", "txt", "docx"]
 
-if not DEBUG:
+if not DEBUG and not IS_TESTING:
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
-    # TLS itself is the PaaS's job; this only tells Django to insist on it.
     SECURE_SSL_REDIRECT = os.environ.get("SECURE_SSL_REDIRECT", "True").lower() in (
         "1", "true", "yes"
     )
+    SECURE_HSTS_SECONDS = int(os.environ.get("SECURE_HSTS_SECONDS", 31536000))
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS = "DENY"

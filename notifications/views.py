@@ -1,5 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
+from django.views.decorators.http import require_POST
 
 from .models import Notification
 
@@ -14,6 +16,7 @@ def inbox(request):
     )
 
 
+@require_POST
 @login_required
 def mark_read(request, pk):
     notification = get_object_or_404(Notification.objects.for_user(request.user), pk=pk)
@@ -21,8 +24,8 @@ def mark_read(request, pk):
     return redirect("notifications:inbox")
 
 
+@require_POST
 @login_required
 def mark_all_read(request):
-    for notification in Notification.objects.for_user(request.user).unread():
-        notification.mark_read()
+    Notification.objects.for_user(request.user).unread().update(read_at=timezone.now())
     return redirect("notifications:inbox")

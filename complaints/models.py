@@ -1,3 +1,6 @@
+import os
+import uuid
+
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -7,6 +10,14 @@ from accounts.models import Student
 
 from . import references
 from .validators import validate_attachment
+
+
+def complaint_attachment_upload_path(instance, filename):
+    """Anonymize and randomize attachment filenames to prevent identity leakage."""
+    ext = os.path.splitext(filename)[1].lower()
+    now = timezone.now()
+    random_filename = "{}{}".format(uuid.uuid4().hex, ext)
+    return "complaints/{:04d}/{:02d}/{}".format(now.year, now.month, random_filename)
 
 
 class ComplaintStatus(models.TextChoices):
@@ -79,7 +90,7 @@ class Complaint(models.Model):
     subject = models.CharField(max_length=160)
     body = models.TextField()
     attachment = models.FileField(
-        upload_to="complaints/%Y/%m/",
+        upload_to=complaint_attachment_upload_path,
         blank=True,
         null=True,
         validators=[validate_attachment],
