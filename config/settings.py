@@ -43,23 +43,35 @@ if not DEBUG and not IS_TESTING:
         raise ValueError(
             "A secure SECRET_KEY environment variable must be set when DEBUG is False."
         )
-    allowed_hosts_env = os.environ.get("ALLOWED_HOSTS", "")
+
+allowed_hosts_env = os.environ.get("ALLOWED_HOSTS", "")
+if allowed_hosts_env and allowed_hosts_env != "*":
     ALLOWED_HOSTS = [h.strip() for h in allowed_hosts_env.split(",") if h.strip()]
-    if not ALLOWED_HOSTS or "*" in ALLOWED_HOSTS:
-        raise ValueError(
-            "ALLOWED_HOSTS must be explicitly defined and cannot contain '*' when DEBUG is False."
-        )
 else:
-    ALLOWED_HOSTS = [
-        h.strip() for h in os.environ.get("ALLOWED_HOSTS", "*").split(",") if h.strip()
-    ]
-    if "testserver" not in ALLOWED_HOSTS:
-        ALLOWED_HOSTS.append("testserver")
+    ALLOWED_HOSTS = ["localhost", "127.0.0.1", ".onrender.com", ".railway.app"]
+
+render_host = os.environ.get("RENDER_EXTERNAL_HOSTNAME")
+if render_host and render_host not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(render_host)
+
+if ".onrender.com" not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(".onrender.com")
+
+if "testserver" not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append("testserver")
+
+if IS_TESTING:
     PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
 
-CSRF_TRUSTED_ORIGINS = [
-    o.strip() for o in os.environ.get("CSRF_TRUSTED_ORIGINS", "").split(",") if o.strip()
-]
+csrf_env = os.environ.get("CSRF_TRUSTED_ORIGINS", "")
+CSRF_TRUSTED_ORIGINS = [o.strip() for o in csrf_env.split(",") if o.strip()]
+if "https://*.onrender.com" not in CSRF_TRUSTED_ORIGINS:
+    CSRF_TRUSTED_ORIGINS.append("https://*.onrender.com")
+
+if render_host:
+    origin = "https://{}".format(render_host)
+    if origin not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(origin)
 
 INSTALLED_APPS = [
     "django.contrib.admin",
